@@ -33,9 +33,17 @@ REM ################ 現在のディレクトリ ################
 echo %%~dp0: %~dp0
 
 
-REM ################ ダウンロードするURLを入力　################
-REM set URL="https://www.youtube.com/watch?v=NOxhfTUUob0"
-set /P URL="ダウンロードするURLを入力: "
+REM ################ クリップボードにURLが保存されているかどうか判定　################
+REM ################ 保存されていない場合、ダウンロードするURLを入力　################
+for /f "tokens=1 usebackq" %%i in (`powershell  get-clipboard`) do set URL=%%i
+set "prefix=!URL:~0,4!"
+
+REM 先頭が "http"かどうかをチェック
+if not "%prefix%"=="http" (
+	set /P URL="ダウンロードするURLを入力: "
+)
+
+echo ダウンロードするURL: !URL!
 
 
 REM echo ダウンロードできるファイルリストの表示
@@ -83,7 +91,7 @@ echo DOWNLOAD_move_audio  %DOWNLOAD_move_audio%
 
 
 REM ################ ダウンロードの実行_通常version　################
-IF %DOWNLOAD_NOMAL%==TRUE (
+IF %DOWNLOAD_NOMAL% == TRUE (
 	echo ダウンロードの実行_通常version
 	echo %DOWNLODER%  %URL%
 	call %DOWNLODER%  %URL%
@@ -95,7 +103,7 @@ REM call %DOWNLODER%  --format-sort res:720  %URL%
 REM call %DOWNLODER%  --format-sort res:480  %URL%
 REM call %DOWNLODER%  --format-sort res:360  %URL%
 
-IF %DOWNLOAD_resolution%==TRUE (
+IF %DOWNLOAD_resolution% == TRUE (
 	echo ダウンロードできるファイルリストの表示
 	call %DOWNLODER%  -F  %URL%
 
@@ -128,7 +136,7 @@ REM 251 - 音声ファイル
 REM yt-dlp -f 571+251
 
 
-IF %DOWNLOAD_move_audio%==TRUE (
+IF %DOWNLOAD_move_audio% == TRUE (
 	echo ダウンロードできるファイルリストの表示
 	call %DOWNLODER%  -F  %URL%
 
@@ -168,4 +176,12 @@ IF %DOWNLOAD_move_audio%==TRUE (
 )
 
 
-REM cmd /k
+
+
+REM エラー処理
+if %ERRORLEVEL% NEQ 0 goto FAILURE
+goto END
+:FAILURE
+echo ERROR STOP: %ERRORLEVEL%
+pause
+:END
